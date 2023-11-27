@@ -73,10 +73,11 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             val optionsViewModel = OptionsViewModel(context = applicationContext)
-                //null //TODO viewModel<OptionsViewModel>(factory = SettingsViewModelFactory(applicationContext))
+            val dbViewModel = ProductDBViewModel(application)
+
+            //null //TODO viewModel<OptionsViewModel>(factory = SettingsViewModelFactory(applicationContext))
 
             GroceryStoreTheme {
-                val dbViewModel = ProductDBViewModel(application)
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
@@ -149,7 +150,7 @@ fun ScaffoldCom(
                     )
                 }
             })
-        //Image of products PNG
+
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -194,12 +195,10 @@ fun ScaffoldCom(
                     )
 
                     Box(
-                        modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center
+                        modifier = Modifier.fillMaxWidth().padding(end = 32.dp), contentAlignment = Alignment.CenterEnd
                     ) {
                         TextButton(
                             shape = RoundedCornerShape(10.dp),
-                            modifier = Modifier
-                                .padding(end = 32.dp, start = 50.dp),
                             onClick = {
                                 totalPrice.value = 0.0
                                 dbViewModel.updateProducts(

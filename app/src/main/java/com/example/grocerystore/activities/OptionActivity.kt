@@ -16,6 +16,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonColors
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -45,17 +47,19 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.grocerystore.R
 import com.example.grocerystore.ui.theme.GroceryStoreTheme
+import com.example.grocerystore.viewmodel.OptionsViewModel
 
 class OptionActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
+            val optionsViewModel = OptionsViewModel(context = applicationContext)
             GroceryStoreTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    Options("Settings")
+                    Options("Settings", optionsViewModel)
                 }
             }
         }
@@ -64,7 +68,10 @@ class OptionActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Options(name: String) {
+fun Options(
+    name: String,
+    optionsViewModel: OptionsViewModel
+) {
 
     val context = LocalContext.current
     Scaffold(
@@ -73,7 +80,7 @@ fun Options(name: String) {
                 modifier = Modifier
                     .fillMaxWidth(),
                 colors = TopAppBarDefaults.largeTopAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
+                    containerColor = optionsViewModel.returnColorOption()
                 ),
                 navigationIcon = {
                     IconButton(
@@ -84,8 +91,9 @@ fun Options(name: String) {
                         modifier = Modifier.padding(10.dp),
                     ) {
                         Icon(
-                            imageVector = ImageVector.vectorResource(id = R.drawable.ic_back), // Customize with your settings icon
-                            contentDescription = "Settings", tint = MaterialTheme.colorScheme.onPrimary
+                            imageVector = ImageVector.vectorResource(id = R.drawable.baseline_arrow_back_ios_24),
+                            contentDescription = "Settings",
+                            tint = MaterialTheme.colorScheme.onPrimary
                         )
                     }
                 },
@@ -118,20 +126,27 @@ fun Options(name: String) {
                     .fillMaxSize()
                     .padding(scaffoldPadding)
             ) {
-                OptionsActivity()
+                OptionsActivity(optionsViewModel)
             }
         })
 }
 
 @Composable
-fun OptionsActivity() {
+fun OptionsActivity(optionsViewModel: OptionsViewModel) {
     var expandedColor by remember { mutableStateOf(false) }
-    var selectedColor by remember { mutableStateOf("Red") }
+    var selectedColor by remember { mutableStateOf(optionsViewModel.returnColorOptionAsString()) }
     var expandedSize by remember { mutableStateOf(false) }
-    var selectedSize by remember { mutableStateOf("Medium") }
+    var selectedSize by remember { mutableStateOf(optionsViewModel.returnSizeOptionAsString()) }
     var darkCheck by remember {
         mutableStateOf(false)
     }
+
+    val buttonColors = ButtonDefaults.buttonColors(
+        containerColor = optionsViewModel.returnColorOption(),
+        contentColor = MaterialTheme.colorScheme.onPrimary,
+        disabledContainerColor = MaterialTheme.colorScheme.onSecondary,
+        disabledContentColor = MaterialTheme.colorScheme.secondaryContainer
+    )
 
     val colorOptions = listOf("Red", "Blue", "Green")
     val sizeOptions = listOf("Small", "Medium", "Large")
@@ -140,13 +155,15 @@ fun OptionsActivity() {
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)
-    )  {
-        Text("Select Theme Color:")
+    ) {
+        Text("Select Theme Color:",
+            fontSize = optionsViewModel.returnSizeOption().sp)
         Box(
             modifier = Modifier.clickable { expandedColor = true }
         ) {
             Button(
                 onClick = { expandedColor = true },
+                colors = buttonColors
             ) {
                 Text(selectedColor)
             }
@@ -160,6 +177,7 @@ fun OptionsActivity() {
                         onClick = {
                             selectedColor = color
                             expandedColor = false
+                            optionsViewModel.saveColorOption(selectedColor)
                         }
                     )
                 }
@@ -169,12 +187,14 @@ fun OptionsActivity() {
         Spacer(modifier = Modifier.height(16.dp))
 
         // Size Option
-        Text("Select Text Size:")
+        Text("Select Text Size:",
+            fontSize = optionsViewModel.returnSizeOption().sp)
         Box(
             modifier = Modifier.clickable { expandedSize = true }
         ) {
             Button(
                 onClick = { expandedSize = true },
+                colors = buttonColors
             ) {
                 Text(selectedSize)
             }
@@ -188,6 +208,7 @@ fun OptionsActivity() {
                         onClick = {
                             selectedSize = size
                             expandedSize = false
+                            optionsViewModel.saveSizeOption(size)
                         })
                 }
             }
@@ -198,7 +219,8 @@ fun OptionsActivity() {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text("Dark Mode:")
+            Text("Dark Mode:",
+                fontSize = optionsViewModel.returnSizeOption().sp)
             Spacer(modifier = Modifier.width(16.dp))
             Switch(
                 checked = darkCheck,
