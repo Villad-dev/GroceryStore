@@ -37,6 +37,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -59,12 +60,11 @@ import androidx.compose.ui.unit.sp
 import com.example.grocerystore.Formatter
 import com.example.grocerystore.R
 import com.example.grocerystore.classes.Product
+import com.example.grocerystore.ui.theme.BuyProductButton
 import com.example.grocerystore.ui.theme.GroceryStoreTheme
 import com.example.grocerystore.ui.theme.interFamily
 import com.example.grocerystore.viewmodel.OptionsViewModel
-import kotlinx.coroutines.flow.Flow
-import androidx.compose.material3.Text
-import com.example.grocerystore.ui.theme.BuyProductButton
+import kotlinx.coroutines.flow.StateFlow
 
 class MainActivity : ComponentActivity() {
 
@@ -95,16 +95,17 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ScaffoldCom(
     name: String,
-    productList: Flow<List<Product>>,
+    productList: StateFlow<HashMap<String, Product>>,
     dbViewModel: ProductDBViewModel,
     context: Context,
     optionsViewModel: OptionsViewModel
 ) {
 
-    val productListFlow by productList.collectAsState(emptyList())
+    val productListFlow by productList.collectAsState(emptyMap<String, Product>())
     val totalPrice = remember {
         mutableStateOf(0.0)
     }
@@ -228,34 +229,31 @@ fun ScaffoldCom(
                 .padding(scaffoldPadding)
         ) {
             //LazyVertical Grid of Products
-            LazyGridProducts(productList, totalPrice, dbViewModel, context)
+            LazyGridProducts(productListFlow, totalPrice, dbViewModel, context)
         }
     })
 }
 
-fun totalPrice(productListFlow: List<Product>): Double {
-    var total = 0.0
-    for (product in productListFlow)
-        total += product.boughtQuantity * product.productPrice
-
-    return total
+fun totalPrice(productList: List<Pair<String, Product>>): Double {
+    return productList.sumOf { it.second.boughtQuantity * it.second.productPrice }
 }
 
-fun boughtValidation(productList: List<Product>): List<Product> {
+
+fun boughtValidation(productList: Map<String, Product>): Map<String, Product> {
     return productList.filter { product ->
-        product.boughtQuantity > 0
+        product.value.boughtQuantity > 0
     }
 }
 
 @Composable
 fun LazyGridProducts(
-    productListFlow: Flow<List<Product>>,
+    productListFlow: Map<String, Product>,
     tPrice: MutableState<Double>,
     dbViewModel: ProductDBViewModel,
     context: Context
 ) {
     val state = LazyGridState()
-    val productList by productListFlow.collectAsState(emptyList())
+    val productList = productListFlow.toList()
 
     tPrice.value = totalPrice(productList)
     LazyVerticalGrid(
@@ -271,7 +269,7 @@ fun LazyGridProducts(
 
 @Composable
 fun ProductItem(
-    product: Product,
+    product: Pair<String, Product>,
     tPrice: MutableState<Double>,
     dbViewModel: ProductDBViewModel,
     context: Context
@@ -292,30 +290,30 @@ fun ProductItem(
             horizontalAlignment = Alignment.Start
         ) {
             Image(
-                painter = painterResource(id = product.imageId),
+                painter = painterResource(id = product.second.imageId),
                 contentDescription = "ProductImage",
                 modifier = Modifier.size(149.dp)
             )
             Text(
-                text = product.productName,
+                text = product.second.productName,
                 fontSize = 16.sp,
                 fontFamily = interFamily,
                 fontWeight = FontWeight.Medium
             )
             Text(
-                text = "$${formatter.formatDoubleToString(product.productPrice)}",
+                text = "$${formatter.formatDoubleToString(product.second.productPrice)}",
                 fontSize = 14.sp,
                 fontFamily = interFamily,
                 fontWeight = FontWeight.SemiBold
             )
             Text(
-                text = "Quantity: ${product.productQuantity}",
+                text = "Quantity: ${product.second.productQuantity}",
                 fontSize = 12.sp,
                 fontFamily = interFamily,
                 fontWeight = FontWeight.Light
             )
             Text(
-                text = "Is Bought: ${product.isBought}",
+                text = "Is Bought: ${product.second.isBought}",
                 fontSize = 14.sp,
                 fontFamily = interFamily,
                 fontWeight = FontWeight.SemiBold
@@ -342,10 +340,10 @@ fun ProductItem(
             ) {
                 IconButton(
                     onClick = {
-                        if (product.boughtQuantity > 0) {
-                            product.boughtQuantity--
-                            tPrice.value -= product.productPrice
-                            dbViewModel.updateProduct(product)
+                        if (product.second.boughtQuantity > 0) {
+                            product.second.boughtQuantity--
+                            tPrice.value -= product.second.productPrice
+                            dbViewModel.updateProduct(product as Map.Entry<String, Product>)
                         }
                     },
                     modifier = Modifier
@@ -360,7 +358,7 @@ fun ProductItem(
                     )
                 }
                 Text(
-                    text = "${product.boughtQuantity}",
+                    text = "${product.second.boughtQuantity}",
                     modifier = Modifier.padding(bottom = 5.dp),
                     color = MaterialTheme.colorScheme.onPrimary,
                     fontSize = 12.sp,
@@ -369,10 +367,10 @@ fun ProductItem(
                 )
                 IconButton(
                     onClick = {
-                        if (product.boughtQuantity < product.productQuantity) {
-                            product.boughtQuantity++
-                            tPrice.value += product.productPrice
-                            dbViewModel.updateProduct(product)
+                        if (product.second.boughtQuantity < product.second.productQuantity) {
+                            product.second.boughtQuantity++
+                            tPrice.value += product.second.productPrice
+                            dbViewModel.updateProduct(product as Map.Entry<String, Product>)
                         }
                     },
                     modifier = Modifier

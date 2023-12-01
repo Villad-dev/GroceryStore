@@ -3,11 +3,11 @@ package com.example.grocerystore.classes
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
-@Entity
+//@Entity
 class Product(
 
-    @PrimaryKey(autoGenerate = true)
-    val id : Long = 0,
+   // @PrimaryKey(autoGenerate = true)
+    var id : String,
     var productName : String,
     var productPrice : Double,
     var productQuantity : Int,

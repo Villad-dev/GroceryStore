@@ -1,22 +1,26 @@
+
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.grocerystore.classes.Product
-import com.example.grocerystore.classes.ProductDatabase
 import com.example.grocerystore.classes.ProductRepository
-import kotlinx.coroutines.flow.Flow
+import com.google.firebase.database.FirebaseDatabase
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 class ProductDBViewModel(private val app: Application) : AndroidViewModel(app) {
 
     private val productRepo: ProductRepository
-    val products: Flow<List<Product>>
-
+    private val firebaseDatabase: FirebaseDatabase
+    val products: StateFlow<HashMap<String, Product>>
 
     init{
-        val productDao = ProductDatabase.getDatabase(app).productDao()
-        productRepo = ProductRepository(productDao)
+        firebaseDatabase = FirebaseDatabase.getInstance()
+        productRepo = ProductRepository(firebaseDatabase)
         products = productRepo.allProducts
+        //val productDao = ProductDatabase.getDatabase(app).productDao()
+        //productRepo = ProductRepository(productDao)
+        //products = productRepo.allProducts
     }
 
     fun insertProduct(product: Product){
@@ -25,31 +29,31 @@ class ProductDBViewModel(private val app: Application) : AndroidViewModel(app) {
         }
     }
 
-    fun updateProduct(product: Product){
+    fun updateProduct(product: Map.Entry<String, Product>){
         viewModelScope.launch {
             productRepo.update(product)
         }
     }
 
-    fun updateProducts(products: List<Product>){
+    fun updateProducts(products: Map<String, Product>){
         viewModelScope.launch {
             for(product in products){
-                if(product.boughtQuantity == product.productQuantity){
-                    deleteProduct(product)
+                if(product.value.boughtQuantity == product.value.productQuantity){
+                    deleteProduct(product.value.id)
                 }
                 else {
-                    product.isBought = true
-                    product.productQuantity -= product.boughtQuantity
-                    product.boughtQuantity = 0
+                    product.value.isBought = true
+                    product.value.productQuantity -= product.value.boughtQuantity
+                    product.value.boughtQuantity = 0
                     updateProduct(product)
                 }
             }
         }
     }
 
-    fun deleteProduct(product: Product){
+    fun deleteProduct(productId: String){
         viewModelScope.launch {
-            productRepo.delete(product)
+            productRepo.delete(productId)
         }
     }
 }
