@@ -68,7 +68,6 @@ class OptionsViewModel(context: Context) : ViewModel() {
         return preferences.getInt(PREF_SIZE_KEY, defaultSizeOption) ?: defaultSizeOption
     }
 
-    // Functions to return current options
     fun returnSizeOption(): Int {
         return sizeOption.value
     }

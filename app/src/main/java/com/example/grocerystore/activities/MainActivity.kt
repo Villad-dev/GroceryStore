@@ -204,7 +204,7 @@ fun ScaffoldCom(
                                 totalPrice.value = 0.0
                                 dbViewModel.updateProducts(
                                     boughtValidation(
-                                        productListFlow
+                                        productListFlow.toList()
                                     )
                                 )
                             },
@@ -235,13 +235,14 @@ fun ScaffoldCom(
 }
 
 fun totalPrice(productList: List<Pair<String, Product>>): Double {
-    return productList.sumOf { it.second.boughtQuantity * it.second.productPrice }
+    val formatter = Formatter()
+    return productList.sumOf { it.second.boughtQuantity * formatter.formatStringToDouble(it.second.productPrice) }
 }
 
 
-fun boughtValidation(productList: Map<String, Product>): Map<String, Product> {
+fun boughtValidation(productList: List<Pair<String, Product>>): List<Pair<String, Product>> {
     return productList.filter { product ->
-        product.value.boughtQuantity > 0
+        product.second.boughtQuantity > 0
     }
 }
 
@@ -290,7 +291,7 @@ fun ProductItem(
             horizontalAlignment = Alignment.Start
         ) {
             Image(
-                painter = painterResource(id = product.second.imageId),
+                painter = painterResource(id = product.second.imageId.toInt()),
                 contentDescription = "ProductImage",
                 modifier = Modifier.size(149.dp)
             )
@@ -301,7 +302,7 @@ fun ProductItem(
                 fontWeight = FontWeight.Medium
             )
             Text(
-                text = "$${formatter.formatDoubleToString(product.second.productPrice)}",
+                text = product.second.productPrice,//"$${formatter.formatDoubleToString(product.second.productPrice)}",
                 fontSize = 14.sp,
                 fontFamily = interFamily,
                 fontWeight = FontWeight.SemiBold
@@ -313,7 +314,7 @@ fun ProductItem(
                 fontWeight = FontWeight.Light
             )
             Text(
-                text = "Is Bought: ${product.second.isBought}",
+                text = "Is Bought: ${product.second.bought}",
                 fontSize = 14.sp,
                 fontFamily = interFamily,
                 fontWeight = FontWeight.SemiBold
@@ -342,8 +343,8 @@ fun ProductItem(
                     onClick = {
                         if (product.second.boughtQuantity > 0) {
                             product.second.boughtQuantity--
-                            tPrice.value -= product.second.productPrice
-                            dbViewModel.updateProduct(product as Map.Entry<String, Product>)
+                            tPrice.value -= formatter.formatStringToDouble(product.second.productPrice)
+                            dbViewModel.updateProduct(product.second)
                         }
                     },
                     modifier = Modifier
@@ -369,8 +370,8 @@ fun ProductItem(
                     onClick = {
                         if (product.second.boughtQuantity < product.second.productQuantity) {
                             product.second.boughtQuantity++
-                            tPrice.value += product.second.productPrice
-                            dbViewModel.updateProduct(product as Map.Entry<String, Product>)
+                            tPrice.value += formatter.formatStringToDouble(product.second.productPrice)
+                            dbViewModel.updateProduct(product.second)
                         }
                     },
                     modifier = Modifier

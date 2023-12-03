@@ -32,6 +32,7 @@ class LoginActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
+            auth = FirebaseAuth.getInstance()
             GroceryStoreTheme {
                 lightColorScheme
                 Surface(
@@ -42,15 +43,14 @@ class LoginActivity : ComponentActivity() {
                 }
             }
         }
-        auth = FirebaseAuth.getInstance()
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginComp(context: Context, auth: FirebaseAuth) {
-    val email = remember { mutableStateOf("") }
-    val password = remember { mutableStateOf("") }
+    val email = remember { mutableStateOf("vladicicre@gmail.com") }
+    val password = remember { mutableStateOf("123456") }
     Column(
         Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally

@@ -29,23 +29,23 @@ class ProductDBViewModel(private val app: Application) : AndroidViewModel(app) {
         }
     }
 
-    fun updateProduct(product: Map.Entry<String, Product>){
+    fun updateProduct(product: Product){
         viewModelScope.launch {
             productRepo.update(product)
         }
     }
 
-    fun updateProducts(products: Map<String, Product>){
+    fun updateProducts(products: List<Pair<String, Product>>){
         viewModelScope.launch {
             for(product in products){
-                if(product.value.boughtQuantity == product.value.productQuantity){
-                    deleteProduct(product.value.id)
+                if(product.second.boughtQuantity == product.second.productQuantity){
+                    deleteProduct(product.second.id)
                 }
                 else {
-                    product.value.isBought = true
-                    product.value.productQuantity -= product.value.boughtQuantity
-                    product.value.boughtQuantity = 0
-                    updateProduct(product)
+                    product.second.bought = true
+                    product.second.productQuantity -= product.second.boughtQuantity
+                    product.second.boughtQuantity = 0
+                    updateProduct(product.second)
                 }
             }
         }

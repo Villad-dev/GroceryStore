@@ -1,5 +1,6 @@
 package com.example.grocerystore.activities
 
+import ProductDBViewModel
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
@@ -15,15 +16,12 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredHeight
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -42,16 +40,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.vectorResource
-import androidx.compose.ui.text.Placeholder
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.grocerystore.R
+import com.example.grocerystore.classes.Product
 import com.example.grocerystore.ui.theme.BuyProductButton
 import com.example.grocerystore.ui.theme.GroceryStoreTheme
 import com.example.grocerystore.viewmodel.OptionsViewModel
@@ -60,13 +56,14 @@ class AddProductActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            var optionsViewModel = OptionsViewModel(applicationContext)
+            val optionsViewModel = OptionsViewModel(applicationContext)
+            val dbViewModel = ProductDBViewModel(application)
             GroceryStoreTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    AddProductCompose(optionsViewModel, applicationContext)
+                    AddProductCompose(optionsViewModel, applicationContext, dbViewModel)
                 }
             }
         }
@@ -75,7 +72,11 @@ class AddProductActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AddProductCompose(optionsViewModel: OptionsViewModel, context: Context) {
+fun AddProductCompose(
+    optionsViewModel: OptionsViewModel,
+    context: Context,
+    dbViewModel: ProductDBViewModel
+) {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -129,19 +130,20 @@ fun AddProductCompose(optionsViewModel: OptionsViewModel, context: Context) {
                     .fillMaxSize()
                     .padding(scaffoldPadding)
             ) {
-                ProductInputFields()
+                ProductInputFields(dbViewModel, context)
             }
         })
 }
 
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProductInputFields() {
-    var productName = remember {mutableStateOf("")}
-    var productPrice = remember { mutableStateOf("") }
-    var productQuantity = remember { mutableStateOf("") }
-    var productImage by remember { mutableStateOf(R.drawable.cross) }
+fun ProductInputFields(dbViewModel: ProductDBViewModel, context: Context) {
+
+    val productName = remember { mutableStateOf("") }
+    val productPrice = remember { mutableStateOf("1.0") }
+    val productQuantity = remember { mutableStateOf("1") }
+    var productImage by remember { mutableStateOf(R.drawable.cross.toLong()) }
+
     val images = listOf(
         R.drawable.apple,
         R.drawable.banana,
@@ -149,15 +151,80 @@ fun ProductInputFields() {
         R.drawable.pineapple
     )
 
-    BoxTextFieldAndLabel(productName, "Product Name:", "Name")
-    BoxTextFieldAndLabel(productPrice, "Product Price:", "Price")
-    BoxTextFieldAndLabel(productQuantity, "Product Quantity:", "Quantity")
+    Box(
+        contentAlignment = Alignment.TopStart,
+        modifier = Modifier
+            .width(300.dp)
+            .height(105.dp)
+            .padding(top = 10.dp)
+    ) {
+        Text(
+            text = "Product Name:",
+            fontSize = 18.sp
+        )
+        TextField(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth(),
+            value = productName.value,
+            onValueChange = { newText ->
+                productName.value = newText
+            },
+            label = { Text("Name") }
+        )
+    }
+
+    Box(
+        contentAlignment = Alignment.TopStart,
+        modifier = Modifier
+            .width(300.dp)
+            .height(105.dp)
+            .padding(top = 10.dp)
+    ) {
+        Text(
+            text = "Product Price:",
+            fontSize = 18.sp
+        )
+        TextField(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth(),
+            value = productPrice.value,
+            onValueChange = { newText ->
+                productPrice.value = newText
+            },
+            label = { Text("Price") }
+        )
+    }
+
+    Box(
+        contentAlignment = Alignment.TopStart,
+        modifier = Modifier
+            .width(300.dp)
+            .height(105.dp)
+            .padding(top = 10.dp)
+    ) {
+        Text(
+            text = "Product Quantity:",
+            fontSize = 18.sp
+        )
+        TextField(
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .fillMaxWidth(),
+            value = productQuantity.value.toString(),
+            onValueChange = { newText ->
+                productQuantity.value = newText
+            },
+            label = { Text("Quantity") }
+        )
+    }
 
     Spacer(modifier = Modifier.height(25.dp))
     Text(text = "Product Image:", fontSize = 18.sp)
 
     Image(
-        painter = painterResource(id = productImage),
+        painter = painterResource(id = productImage.toInt()),
         contentDescription = "Product",
         modifier = Modifier
             .fillMaxWidth()
@@ -166,11 +233,26 @@ fun ProductInputFields() {
     )
 
     ImagePicker(images = images, onImageSelected = { selectedImage ->
-        productImage = selectedImage
+        productImage = selectedImage.toLong()
     })
 
     Button(
-        onClick = { /*TODO*/ },
+        onClick = {
+            dbViewModel.insertProduct(
+                Product(
+                    "new",
+                    productName.value,
+                    productPrice.value,
+                    productQuantity.value.toLong(),
+                    productImage,
+                    0,
+                    false
+                )
+            )
+            val intent = Intent(context, MainActivity::class.java)
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            context.startActivity(intent)
+        },
         modifier = Modifier.width(200.dp),
         colors = BuyProductButton()
     ) {
@@ -180,12 +262,14 @@ fun ProductInputFields() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BoxTextFieldAndLabel(itemState: MutableState<String>,hugeLabel: String, label: String) {
-    Box(contentAlignment = Alignment.TopStart,
+fun BoxTextFieldAndLabel(itemState: MutableState<String>, hugeLabel: String, label: String) {
+    Box(
+        contentAlignment = Alignment.TopStart,
         modifier = Modifier
             .width(300.dp)
             .height(105.dp)
-            .padding(top = 10.dp)) {
+            .padding(top = 10.dp)
+    ) {
         Text(
             text = hugeLabel,
             fontSize = 18.sp
@@ -213,7 +297,6 @@ fun ImagePicker(images: List<Int>, onImageSelected: (Int) -> Unit) {
         modifier = Modifier
             .padding(16.dp)
     ) {
-        // Example: Button to show the image picker
         Button(onClick = { isDialogVisible = true }) {
             Text("Pick Image", fontSize = 18.sp)
         }
@@ -228,8 +311,6 @@ fun ImagePicker(images: List<Int>, onImageSelected: (Int) -> Unit) {
                     .height(200.dp)
             )
         }
-
-        // Display the image picker dialog
         if (isDialogVisible) {
             AlertDialog(
                 onDismissRequest = { isDialogVisible = false },

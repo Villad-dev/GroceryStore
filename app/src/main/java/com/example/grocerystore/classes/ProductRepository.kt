@@ -14,31 +14,36 @@ class ProductRepository(private val firebaseDatabase: FirebaseDatabase) {
     private val products: String = "products"
 
     init {
-        firebaseDatabase.getReference().addChildEventListener(object : ChildEventListener {
+        firebaseDatabase.getReference(products).addChildEventListener(object : ChildEventListener {
             override fun onChildAdded(snapshot: DataSnapshot, previousChildName: String?) {
+
                 val product = Product(
                     id = snapshot.ref.key as String,
                     productName = snapshot.child("productName").value as String,
-                    productPrice = snapshot.child("productPrice").value as Double,
-                    productQuantity = snapshot.child("productQuantity").value as Int,
-                    imageId = snapshot.child("imageId").value as Int,
-                    boughtQuantity = snapshot.child("boughtQuantity").value as Int,
-                    isBought = snapshot.child("isBought").value as Boolean
+                    productPrice = snapshot.child("productPrice").value as String,
+                    productQuantity = snapshot.child("productQuantity").value as Long,
+                    imageId = snapshot.child("imageId").value as Long,
+                    boughtQuantity = snapshot.child("boughtQuantity").value as Long,
+                    bought = snapshot.child("bought").value as Boolean
                 )
-                allProducts.value[product.id] = product
+                allProducts.value = allProducts.value.toMutableMap().apply {
+                    put(product.id, product)
+                } as HashMap<String, Product>
             }
 
             override fun onChildChanged(snapshot: DataSnapshot, previousChildName: String?) {
                 val product = Product(
                     id = snapshot.ref.key as String,
                     productName = snapshot.child("productName").value as String,
-                    productPrice = snapshot.child("productPrice").value as Double,
-                    productQuantity = snapshot.child("productQuantity").value as Int,
-                    imageId = snapshot.child("imageId").value as Int,
-                    boughtQuantity = snapshot.child("boughtQuantity").value as Int,
-                    isBought = snapshot.child("isBought").value as Boolean
+                    productPrice = snapshot.child("productPrice").value as String,
+                    productQuantity = snapshot.child("productQuantity").value as Long,
+                    imageId = snapshot.child("imageId").value as Long,
+                    boughtQuantity = snapshot.child("boughtQuantity").value as Long,
+                    bought = snapshot.child("bought").value as Boolean
                 )
-                allProducts.value[product.id] = product
+                allProducts.value = allProducts.value.toMutableMap().apply {
+                    put(product.id, product)
+                } as HashMap<String, Product>
             }
 
             override fun onChildRemoved(snapshot: DataSnapshot) {
@@ -54,28 +59,34 @@ class ProductRepository(private val firebaseDatabase: FirebaseDatabase) {
             override fun onCancelled(error: DatabaseError) {
                 Log.e("error", error.message)
             }
-
         })
-
     }
 
-    suspend fun insert(product: Product) = firebaseDatabase.getReference(products).push().also {
-        product.id = it.ref.key.toString()
-        it.setValue(product)
-    }
-
-    suspend fun update(product: Map.Entry<String, Product>) {
-        firebaseDatabase.getReference(products+"/${product.value.id}").also {
-            it.child("productPrice").setValue(product.value.productPrice)
-            it.child("productQuantity").setValue(product.value.productQuantity)
-            it.child("boughtQuantity").setValue(product.value.boughtQuantity)
-            it.child("productName").setValue(product.value.productName)
-            it.child("isBought").setValue(product.value.isBought)
-            it.child("imageId").setValue(product.value.imageId)
+    fun insert(product: Product){
+        firebaseDatabase.getReference(products).push().also { reference ->
+            Log.i("msg1", firebaseDatabase.getReference(products).toString() + "\n ${reference.ref.key} ")
+            product.id = reference.ref.key.toString()
+            reference.setValue(product).addOnSuccessListener { msg ->
+                    Log.i("msg2", "Success ${msg.toString()}")
+                }
+                .addOnFailureListener { msg ->
+                    Log.i("msg3", "Failure ${msg.message}")
+                }
         }
     }
 
-    suspend fun delete(productId: String) {
+    fun update(product: Product) {
+        firebaseDatabase.getReference(products+"/${product.id}").also {
+            it.child("productPrice").setValue(product.productPrice)
+            it.child("productQuantity").setValue(product.productQuantity)
+            it.child("boughtQuantity").setValue(product.boughtQuantity)
+            it.child("productName").setValue(product.productName)
+            it.child("bought").setValue(product.bought)
+            it.child("imageId").setValue(product.imageId)
+        }
+    }
+
+    fun delete(productId: String) {
         firebaseDatabase.getReference(products+"/${productId}").removeValue()
     }
     /*  suspend fun insert(product: Product) = productDao.insertProduct(product)
