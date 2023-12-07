@@ -33,7 +33,6 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -50,6 +49,7 @@ import com.example.grocerystore.R
 import com.example.grocerystore.classes.Product
 import com.example.grocerystore.ui.theme.BuyProductButton
 import com.example.grocerystore.ui.theme.GroceryStoreTheme
+import com.example.grocerystore.viewmodel.ListViewModel
 import com.example.grocerystore.viewmodel.OptionsViewModel
 
 class AddProductActivity : ComponentActivity() {
@@ -57,6 +57,7 @@ class AddProductActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             val optionsViewModel = OptionsViewModel(applicationContext)
+            ListViewModel(applicationContext)
             val dbViewModel = ProductDBViewModel(application)
             GroceryStoreTheme {
                 Surface(
@@ -148,7 +149,12 @@ fun ProductInputFields(dbViewModel: ProductDBViewModel, context: Context) {
         R.drawable.apple,
         R.drawable.banana,
         R.drawable.orange,
-        R.drawable.pineapple
+        R.drawable.pineapple,
+        R.drawable.watermelon,
+        R.drawable.juice,
+        R.drawable.strawberry,
+        R.drawable.apple_green,
+        R.drawable.canada_apple
     )
 
     Box(
@@ -212,7 +218,7 @@ fun ProductInputFields(dbViewModel: ProductDBViewModel, context: Context) {
             modifier = Modifier
                 .align(Alignment.BottomCenter)
                 .fillMaxWidth(),
-            value = productQuantity.value.toString(),
+            value = productQuantity.value,
             onValueChange = { newText ->
                 productQuantity.value = newText
             },
@@ -244,8 +250,8 @@ fun ProductInputFields(dbViewModel: ProductDBViewModel, context: Context) {
                     productName.value,
                     productPrice.value,
                     productQuantity.value.toLong(),
-                    productImage,
                     0,
+                    productImage,
                     false
                 )
             )
@@ -257,33 +263,6 @@ fun ProductInputFields(dbViewModel: ProductDBViewModel, context: Context) {
         colors = BuyProductButton()
     ) {
         Text(text = "Add product", fontSize = 25.sp)
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun BoxTextFieldAndLabel(itemState: MutableState<String>, hugeLabel: String, label: String) {
-    Box(
-        contentAlignment = Alignment.TopStart,
-        modifier = Modifier
-            .width(300.dp)
-            .height(105.dp)
-            .padding(top = 10.dp)
-    ) {
-        Text(
-            text = hugeLabel,
-            fontSize = 18.sp
-        )
-        TextField(
-            modifier = Modifier
-                .align(Alignment.BottomCenter)
-                .fillMaxWidth(),
-            value = itemState.value,
-            onValueChange = { newText ->
-                itemState.value = newText
-            },
-            label = { Text(label) }
-        )
     }
 }
 

@@ -21,10 +21,10 @@ class OptionsViewModel(context: Context) : ViewModel() {
     private val defaultSizeOption = 18
 
     private val _colorOption = MutableStateFlow(loadColorOption())
-    val colorOption: StateFlow<Color> = _colorOption
+    private val colorOption: StateFlow<Color> = _colorOption
 
     private val _sizeOption = MutableStateFlow(loadSizeOption())
-    val sizeOption: StateFlow<Int> = _sizeOption
+    private val sizeOption: StateFlow<Int> = _sizeOption
 
     fun saveColorOption(color: String) {
         when (color) {

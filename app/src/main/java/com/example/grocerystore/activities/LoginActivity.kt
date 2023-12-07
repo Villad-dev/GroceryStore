@@ -22,8 +22,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import com.example.grocerystore.classes.ProductRepository
 import com.example.grocerystore.ui.theme.GroceryStoreTheme
 import com.example.grocerystore.ui.theme.lightColorScheme
+import com.example.grocerystore.viewmodel.ListViewModel
 import com.google.firebase.auth.FirebaseAuth
 
 class LoginActivity : ComponentActivity() {
@@ -32,6 +34,7 @@ class LoginActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
+            val listViewModel = ListViewModel(applicationContext)
             auth = FirebaseAuth.getInstance()
             GroceryStoreTheme {
                 lightColorScheme
@@ -39,7 +42,7 @@ class LoginActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    LoginComp(applicationContext, auth)
+                    LoginComp(applicationContext, auth, listViewModel)
                 }
             }
         }
@@ -48,7 +51,7 @@ class LoginActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun LoginComp(context: Context, auth: FirebaseAuth) {
+fun LoginComp(context: Context, auth: FirebaseAuth, listViewModel : ListViewModel) {
     val email = remember { mutableStateOf("vladicicre@gmail.com") }
     val password = remember { mutableStateOf("123456") }
     Column(
@@ -71,7 +74,11 @@ fun LoginComp(context: Context, auth: FirebaseAuth) {
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
         )
         Button(onClick = {
+            val mail = ommitMail(email.value)
+            listViewModel.saveListTypeString(mail)
+            ProductRepository.key = if (listViewModel.loadListType()) "Shared" else mail
             login(email.value, password.value, context, auth)
+
         }
         ) {
             Text(text = "Login")
@@ -85,6 +92,10 @@ fun LoginComp(context: Context, auth: FirebaseAuth) {
             Text(text = "Register")
         }
     }
+}
+
+fun ommitMail(email: String): String {
+    return email.substringBefore("@")
 }
 
 fun login(email: String, password: String, context: Context, auth: FirebaseAuth){
