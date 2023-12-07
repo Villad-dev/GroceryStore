@@ -113,9 +113,9 @@ class MainActivity : ComponentActivity() {
         Scaffold(floatingActionButtonPosition = FabPosition.End, floatingActionButton = {
             FloatingActionButton(
                 onClick = {
-                    val intent = Intent(applicationContext, AddProductActivity::class.java)
-                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    applicationContext.startActivity(intent)
+                    val addProductIntent = Intent(applicationContext, AddProductActivity::class.java)
+                    addProductIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    applicationContext.startActivity(addProductIntent)
                 },
                 containerColor = optionsViewModel.returnColorOption(),
                 contentColor = MaterialTheme.colorScheme.onPrimary
@@ -140,9 +140,9 @@ class MainActivity : ComponentActivity() {
                 actions = {
                     IconButton(
                         onClick = {
-                            val intent = Intent(applicationContext, OptionActivity::class.java)
-                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                            applicationContext.startActivity(intent)
+                            val optionIntent = Intent(applicationContext, OptionActivity::class.java)
+                            optionIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            applicationContext.startActivity(optionIntent)
                         },
                         modifier = Modifier.padding(10.dp),
                     ) {
