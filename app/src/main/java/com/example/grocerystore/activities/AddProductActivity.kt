@@ -136,7 +136,6 @@ class AddProductActivity : ComponentActivity() {
             })
     }
 
-    @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     fun ProductInputFields(dbViewModel: ProductDBViewModel) {
 
